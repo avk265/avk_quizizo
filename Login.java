@@ -2,7 +2,6 @@ package app;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
-import java.io.IOException;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 

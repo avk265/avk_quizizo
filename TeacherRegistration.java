@@ -23,7 +23,7 @@ public class TeacherRegistration {
         frame.setLayout(null);
 
         // Adding Image
-        ImageIcon icon = new ImageIcon("C:\\Users\\Kiran\\Desktop\\myjdbc\\jdbc project\\src\\app\\icon.png");
+        ImageIcon icon = new ImageIcon("C:\\Users\\Kiran\\Desktop\\myjdbc\\java_app\\src\\app\\app\\icon.png");
         Image scaledImage = icon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
         ImageIcon ico = new ImageIcon(scaledImage);
         JLabel img = new JLabel(ico);

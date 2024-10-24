@@ -15,7 +15,7 @@ public class Registration {
         frame.setLayout(null);
 
         // Adding Image
-        ImageIcon icon = new ImageIcon("C:\\Users\\Kiran\\Desktop\\myjdbc\\jdbc project\\src\\app\\icon.png");
+        ImageIcon icon = new ImageIcon("C:\\Users\\Kiran\\Desktop\\myjdbc\\java_app\\src\\app\\app\\icon.png");
         Image scaledImage = icon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
         ImageIcon ico = new ImageIcon(scaledImage);
         JLabel img = new JLabel(ico);
@@ -112,46 +112,42 @@ public class Registration {
                         !mobileField.getText().isEmpty() &&
                         !emailField.getText().isEmpty() &&
                         passwordField.getPassword().length > 0 &&
-                        !designationField.getText().isEmpty();
+                        !designationField.getText().isEmpty() &&
+                        c.getState(); // Check if checkbox is selected
 
-                submitButton.setEnabled(allFieldsFilled && c.getState());
+                submitButton.setEnabled(allFieldsFilled);
             }
         };
 
+        // Add key listeners to the fields
         usernameField.addKeyListener(formKeyListener);
         fullNameField.addKeyListener(formKeyListener);
-        male.addActionListener(e -> submitButton.setEnabled(c.getState()));
-        female.addActionListener(e -> submitButton.setEnabled(c.getState()));
-        other.addActionListener(e -> submitButton.setEnabled(c.getState()));
         mobileField.addKeyListener(formKeyListener);
         emailField.addKeyListener(formKeyListener);
         passwordField.addKeyListener(formKeyListener);
         designationField.addKeyListener(formKeyListener);
-        c.addItemListener(e -> submitButton.setEnabled(c.getState() && submitButton.isEnabled()));
+        c.addItemListener(e -> submitButton.setEnabled(c.getState() && isFormValid(usernameField, fullNameField, mobileField, emailField, passwordField, designationField, male, female, other)));
 
         // Submit Button Action Listener
-        submitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String username = usernameField.getText();
-                String fullName = fullNameField.getText();
-                String gender = male.isSelected() ? "Male" : female.isSelected() ? "Female" : "Other";
-                String mobileNumber = mobileField.getText();
-                String email = emailField.getText();
-                String password = new String(passwordField.getPassword());
-                String designation = designationField.getText();
+        submitButton.addActionListener(e -> {
+            String username = usernameField.getText();
+            String fullName = fullNameField.getText();
+            String gender = male.isSelected() ? "Male" : female.isSelected() ? "Female" : "Other";
+            String mobileNumber = mobileField.getText();
+            String email = emailField.getText();
+            String password = new String(passwordField.getPassword());
+            String designation = designationField.getText();
 
-                // Validate input
-                if (checkUsernameExists(username)) {
-                    JOptionPane.showMessageDialog(frame, "Username already exists. Please choose a different username.", "Username Taken", JOptionPane.WARNING_MESSAGE);
-                } else if (!isValidMobileNumber(mobileNumber)) {
-                    JOptionPane.showMessageDialog(frame, "Mobile number must be exactly 10 digits.", "Invalid Mobile Number", JOptionPane.WARNING_MESSAGE);
-                } else if (!isValidEmail(email)) {
-                    JOptionPane.showMessageDialog(frame, "Email must end with @gmail.com, @tkmce.ac.in, or @outlook.com", "Invalid Email", JOptionPane.WARNING_MESSAGE);
-                } else {
-                    // Save to database
-                    saveToDatabase(username, fullName, gender, mobileNumber, email, password, designation);
-                }
+            // Validate input
+            if (checkUsernameExists(username)) {
+                JOptionPane.showMessageDialog(frame, "Username already exists. Please choose a different username.", "Username Taken", JOptionPane.WARNING_MESSAGE);
+            } else if (!isValidMobileNumber(mobileNumber)) {
+                JOptionPane.showMessageDialog(frame, "Mobile number must be exactly 10 digits.", "Invalid Mobile Number", JOptionPane.WARNING_MESSAGE);
+            } else if (!isValidEmail(email)) {
+                JOptionPane.showMessageDialog(frame, "Email must end with @gmail.com, @tkmce.ac.in, or @outlook.com", "Invalid Email", JOptionPane.WARNING_MESSAGE);
+            } else {
+                // Save to database
+                saveToDatabase(username, fullName, gender, mobileNumber, email, password, designation);
             }
         });
 
@@ -165,19 +161,45 @@ public class Registration {
         frame.setVisible(true);
     }
 
+    private static boolean isFormValid(JTextField usernameField, JTextField fullNameField, JTextField mobileField, JTextField emailField, JPasswordField passwordField, JTextField designationField, JRadioButton male, JRadioButton female, JRadioButton other) {
+        return !usernameField.getText().isEmpty() &&
+                !fullNameField.getText().isEmpty() &&
+                (male.isSelected() || female.isSelected() || other.isSelected()) &&
+                !mobileField.getText().isEmpty() &&
+                !emailField.getText().isEmpty() &&
+                passwordField.getPassword().length > 0 &&
+                !designationField.getText().isEmpty();
+    }
+
     private static boolean checkUsernameExists(String username) {
         String url = "jdbc:mysql://localhost:3306/mydb";
         String dbUsername = "root";
         String dbPassword = "kiran";
-
-        String query = "SELECT COUNT(*) FROM advisor_records WHERE username = ?";
         try (Connection conn = DriverManager.getConnection(url, dbUsername, dbPassword);
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0; // returns true if username exists
+             Statement stmt = conn.createStatement()) {
+
+            // Create table if not exists
+            String createTableQuery = "CREATE TABLE IF NOT EXISTS advisor_records ("
+                    + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                    + "username VARCHAR(50) UNIQUE, "
+                    + "full_name VARCHAR(100), "
+                    + "gender VARCHAR(10), "
+                    + "mobile_number VARCHAR(15), "
+                    + "email VARCHAR(100), "
+                    + "password VARCHAR(100), "
+                    + "designation VARCHAR(50)"
+                    + ")";
+            stmt.execute(createTableQuery);
+
+            String query = "SELECT COUNT(*) FROM advisor_records WHERE username = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+                pstmt.setString(1, username);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; // returns true if username exists
+                }
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
